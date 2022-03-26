@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<div
+  style="
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+  "
+>
+  <div style="padding: 50px; overflow: scroll">
+    <table id="mem" style="font-family: monospace"></table>
+  </div>
+  <div
+    style="flex: 1; display: flex; align-items: center; justify-content: center"
+  >
+    <canvas
+      width="800"
+      height="600"
+      style="height: 100%; border: 1px solid black"
+    ></canvas>
+  </div>
+</div>
+<script>
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+  const rowSize = 800;
+  const colSize = 600;
+  const frameBufferSize = rowSize * colSize * 3;
+
+  const memory = Array(1000).fill(0);
+  let current = 0;
+  let editing = false;
+
+  let address = (index) => index >> 3;
+
+  const shift = (index) => 7 - (index & 0xff);
+
+  function getBit(index) {
+    return (memory[address(index)] >> shift(index)) & 1;
+  }
+
+  function setBit(index, v) {
+    const a = address(index);
+    const s = shift(index);
+    if (v) {
+      memory[a] |= 1 << s;
+    } else {
+      memory[a] &= ~(1 << s);
+    }
+    if (a < frameBufferSize) {
+      const row = Math.floor(a / (3 * rowSize));
+      const col = Math.floor((a % (3 * rowSize)) / 3);
+      const base = row * rowSize * 3 + col * 3;
+      const r = memory[base];
+      const g = memory[base + 1];
+      const b = memory[base + 2];
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      console.log(`rgb(${r}, ${g}, ${b})`);
+      ctx.fillRect(row, col, 1, 1);
+    }
+  }
+
+  window.addEventListener("click", () => {
+    editing = false;
+    update();
+  });
+
+  const panel = document.querySelector("#mem");
+  panel.onclick = (e) => {
+    e.stopPropagation();
+    editing = true;
+    update();
+  };
+
+  let startTime = 0;
+  window.onkeydown = (e) => {
+    if (e.keyCode == 32) e.preventDefault();
+    if (!startTime) startTime = Date.now();
+  };
+  window.onkeyup = (e) => {
+    if (!editing) return;
+    if (e.keyCode == 8) {
+      if (!getBit()) {
+        --current;
+      } else {
+        setBit(current, 0);
+      }
+    } else {
+      setBit(current, Date.now() - startTime > 100 ? 1 : 0);
+      startTime = 0;
+      ++current;
+    }
+    update();
+  };
+
+  for (let i = 0; i < memory.length; ++i) {
+    const tr = document.createElement("tr");
+    const label = document.createElement("td");
+    label.textContent = i.toString(2).padStart(8, "0");
+    label.style.color = "gray";
+    label.style.width = "80px";
+    tr.append(label);
+    for (let j = 0; j < 8; ++j) {
+      const bit = document.createElement("td");
+      bit.index = i * 8 + j;
+      bit.className = "bit";
+      bit.style.cursor = "pointer";
+      bit.onclick = () => {
+        current = i * 8 + j;
+        update();
+      };
+      tr.append(bit);
+    }
+    panel.append(tr);
+    update();
+  }
+
+  function update() {
+    for (let bit of document.querySelectorAll(".bit")) {
+      bit.textContent = getBit(bit.index);
+      if (current == +bit.index && editing) {
+        bit.style.color = "white";
+        bit.style.background = "black";
+      } else {
+        bit.style.color = "black";
+        bit.style.background = "white";
+      }
+    }
+  }
+</script>
