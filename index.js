@@ -7,21 +7,28 @@ const rowSize = 800;
 const colSize = 600;
 const frameBufferSize = rowSize * colSize * 3;
 
-// LOAD: 0x02,
-// STORE: 0x03,
 // LOAD_DYNAMIC: 0x05,
 // STORE_DYNAMIC: 0x07,
-// BRANCH: 0x0b,
 
 const binary = assemble([
-  "begin",
-  [op.load_static, "a"],
-  [op.load],
-  [op.load],
+  [op.load_static, 100],
+  [op.shift],
   "loop",
+  [op.load_static, "a"],
+  [op.reduce, alu[">="]],
+  [op.branch, "exit"],
+  [op.load_static, 100],
+  [op.shift],
+  [op.load_static, "b"],
+  [op.reduce, alu["+"]],
+  [op.store_static, 100],
   [op.jump, "loop"],
+  "exit",
+  [op.jump, -1],
   "a",
-  0x10101010,
+  10,
+  "b",
+  1,
 ]);
 
 run(binary);

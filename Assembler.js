@@ -24,14 +24,13 @@ export function assemble(text) {
         case op.load_static:
         case op.store_static: {
           const real_arg = typeof arg == "string" ? tags[arg] : arg;
-          console.log(arg, real_arg);
-          res.push((opcode << 24) | real_arg);
+          res.push((opcode << 24) | (real_arg & ((1 << 24) - 1)));
           break;
         }
         case op.load_dynamic:
         case op.store_dynamic:
           if (typeof arg != "number") throw "arg type error";
-          res.push((opcode << 24) | arg);
+          res.push((opcode << 24) | (arg & ((1 << 24) - 1)));
           break;
         case op.nop:
         case op.load:
@@ -48,6 +47,5 @@ export function assemble(text) {
       }
     }
   }
-  console.log(res.map((x) => x.toString(16).padStart(8, "0")).join("\n"));
   return res;
 }

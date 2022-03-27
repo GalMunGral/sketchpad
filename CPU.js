@@ -54,130 +54,134 @@ export function run(program) {
     write_word(0x00800000 + i, program[i]);
   }
 
-  setTimeout(function run_until_deadline() {
-    // requestIdleCallback(function run_until_deadline(deadline) {
-    // while (deadline.timeRemaining()) {
-    const instr = read_word(reg.pc);
-    const opcode = instr >> 24;
-    const offset = (instr << 8) >> 8;
-    const operator = (instr << 8) >> 24;
+  requestIdleCallback(function run_until_deadline(deadline) {
+    console.log("run");
+    while (deadline.timeRemaining()) {
+      const instr = read_word(reg.pc);
+      const opcode = instr >> 24;
+      const offset = (instr << 8) >> 8;
+      const operator = (instr << 8) >> 24;
 
-    console.log(
-      (reg.pc | 0).toString(16).padStart(8, "0"),
-      "->",
-      (instr | 0).toString(16).padStart(8, "0")
-    );
+      console.log(
+        (reg.pc | 0).toString(16).padStart(8, "0"),
+        "->",
+        (instr | 0).toString(16).padStart(8, "0")
+      );
 
-    ++reg.pc;
-    switch (opcode) {
-      case op.nop:
-        break;
-      case op.jump:
-        reg.pc = 0x00800000 + offset;
-        break;
-      case op.branch:
-        if (reg.r) reg.pc = 0x00800000 + offset;
-        break;
-      case op.load:
-        reg.r = read_word(reg.r);
-        break;
-      case op.load_static:
-        reg.r = read_word(0x00800000 + offset);
-        break;
-      case op.load_dynamic:
-        reg.r = read_word(reg.sp1 + offset);
-        break;
-      case op.store:
-        write_word(reg.r, reg.l);
-        break;
-      case op.store_static:
-        write_word(0x00800000 + offset, reg.l);
-        break;
-      case op.store_dynamic:
-        write_word(reg.sp1 + offset, reg.l);
-        break;
-      case op.shift:
-        reg.l = reg.r;
-        break;
-      case op.reduce: {
-        const mask = 0xffffffff;
-        switch (operator) {
-          case alu["~"]:
-            reg.l = ~reg.l & mask;
-            break;
-          case alu["!"]:
-            reg.l = reg.l ? 0 : 1;
-            break;
-          case alu[">>"]:
-            reg.l = (reg.l >> reg.r) & mask;
-            break;
-          case alu["<<"]:
-            reg.l = (reg.l << reg.r) & mask;
-            break;
-          case alu["&"]:
-            reg.l = reg.l & reg.r & mask;
-            break;
-          case alu["|"]:
-            reg.l = (reg.l | reg.r) & mask;
-            break;
-          case alu["^"]:
-            reg.l = (reg.l ^ reg.r) & mask;
-            break;
-          case alu["=="]:
-            reg.l = reg.l == reg.r ? 1 : 0;
-            break;
-          case alu["!="]:
-            reg.l = reg.l != reg.r ? 1 : 0;
-            break;
-          case alu["<="]:
-            reg.l = reg.l <= reg.r ? 1 : 0;
-            break;
-          case alu[">="]:
-            reg.l = reg.l >= reg.r ? 1 : 0;
-            break;
-          case alu["<"]:
-            reg.l = reg.l < reg.r ? 1 : 0;
-            break;
-          case alu[">"]:
-            reg.l = reg.l > reg.r ? 1 : 0;
-            break;
-          case alu["&&"]:
-            reg.l = reg.l && reg.r ? 1 : 0;
-            break;
-          case alu["||"]:
-            reg.l = reg.l || reg.r ? 1 : 0;
-            break;
-          case alu["+"]:
-            reg.l = (reg.l + reg.r) & mask;
-            break;
-          case alu["+"]:
-            reg.l = (reg.l + reg.r) & mask;
-            break;
-          case alu["-"]:
-            reg.l = (reg.l - reg.r) & mask;
-            break;
-          case alu["*"]:
-            reg.l = (reg.l * reg.r) & mask;
-            break;
-          case alu["/"]:
-            reg.l = (reg.l / reg.r) & mask;
-            break;
-          case alu["%"]:
-            reg.l = reg.l % reg.r & mask;
-            break;
-          case alu["**"]:
-            reg.l = (reg.l ** reg.r) & mask;
-            break;
-          default:
-            throw "unsupported";
+      ++reg.pc;
+      switch (opcode) {
+        case op.nop:
+          break;
+        case op.jump:
+          if (offset < 0) {
+            console.log("yo");
+            return;
+          }
+          reg.pc = 0x00800000 + offset;
+          break;
+        case op.branch:
+          if (offset < 0) {
+            console.log("yo");
+            return;
+          }
+          if (offset < 0) return;
+          if (reg.l) reg.pc = 0x00800000 + offset;
+          break;
+        case op.load:
+          reg.r = read_word(reg.r);
+          break;
+        case op.load_static:
+          reg.r = read_word(0x00800000 + offset);
+          break;
+        case op.load_dynamic:
+          reg.r = read_word(reg.sp1 + offset);
+          break;
+        case op.store:
+          write_word(reg.r, reg.l);
+          break;
+        case op.store_static:
+          write_word(0x00800000 + offset, reg.l);
+          break;
+        case op.store_dynamic:
+          write_word(reg.sp1 + offset, reg.l);
+          break;
+        case op.shift:
+          reg.l = reg.r;
+          break;
+        case op.reduce: {
+          switch (operator) {
+            case alu["~"]:
+              reg.l = ~reg.l;
+              break;
+            case alu["!"]:
+              reg.l = reg.l ? 0 : 1;
+              break;
+            case alu[">>"]:
+              reg.l = reg.l >> reg.r;
+              break;
+            case alu["<<"]:
+              reg.l = reg.l << reg.r;
+              break;
+            case alu["&"]:
+              reg.l = reg.l & reg.r;
+              break;
+            case alu["|"]:
+              reg.l = reg.l | reg.r;
+              break;
+            case alu["^"]:
+              reg.l = reg.l ^ reg.r;
+              break;
+            case alu["=="]:
+              reg.l = reg.l == reg.r ? 1 : 0;
+              break;
+            case alu["!="]:
+              reg.l = reg.l != reg.r ? 1 : 0;
+              break;
+            case alu["<="]:
+              reg.l = reg.l <= reg.r ? 1 : 0;
+              break;
+            case alu[">="]:
+              reg.l = reg.l >= reg.r ? 1 : 0;
+              break;
+            case alu["<"]:
+              reg.l = reg.l < reg.r ? 1 : 0;
+              break;
+            case alu[">"]:
+              reg.l = reg.l > reg.r ? 1 : 0;
+              break;
+            case alu["&&"]:
+              reg.l = reg.l && reg.r ? 1 : 0;
+              break;
+            case alu["||"]:
+              reg.l = reg.l || reg.r ? 1 : 0;
+              break;
+            case alu["+"]:
+              reg.l = (reg.l + reg.r) | 0;
+              break;
+            case alu["-"]:
+              reg.l = (reg.l - reg.r) | 0;
+              break;
+            case alu["*"]:
+              reg.l = (reg.l * reg.r) | 0;
+              break;
+            case alu["/"]:
+              reg.l = (reg.l / reg.r) | 0;
+              break;
+            case alu["%"]:
+              reg.l = reg.l % reg.r | 0;
+              break;
+            case alu["**"]:
+              reg.l = (reg.l ** reg.r) | 0;
+              break;
+            default:
+              throw "unsupported";
+          }
+          break;
         }
-        break;
+        default:
+          throw "unsupported";
       }
-      default:
-        throw "unsupported";
     }
-    // }
-    setTimeout(run_until_deadline, 200);
-    // requestIdleCallback(run_until_deadline);
-  }, 200);
+    requestIdleCallback(run_until_deadline);
+  });
 }
