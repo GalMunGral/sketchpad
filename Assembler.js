@@ -1,49 +1,64 @@
 import { op } from "./CPU.js";
 
 export function assemble(text) {
+  // console.log(text.map((line) => line.map(String).join(" ")).join("\n"));
+
   const tags = {};
-  let i = 0;
-  for (const line of text) {
-    if (typeof line == "string") {
-      tags[line] = i;
+  let offset = 0;
+  for (const [head] of text) {
+    if (typeof head == "string") {
+      tags[head] = offset;
     } else {
-      ++i;
+      ++offset;
     }
   }
 
   const res = [];
-  for (const line of text) {
-    if (typeof line == "string") continue;
-    if (typeof line == "number") {
-      res.push(line);
+  for (const [head, arg] of text) {
+    if (typeof head == "string") continue;
+    if (typeof head == "number") {
+      res.push(head);
     } else {
-      const [opcode, arg] = line;
-      switch (opcode) {
-        case op.jump:
-        case op.branch:
-        case op.load_static:
-        case op.store_static: {
+      switch (head) {
+        case op.brl:
+        case op.brr:
+        case op.jmp:
+        case op.call:
+        case op.lls:
+        case op.lrs:
+        case op.llsi:
+        case op.lrsi:
+        case op.sls:
+        case op.srs:
+        case op.slsi:
+        case op.srsi: {
           const real_arg = typeof arg == "string" ? tags[arg] : arg;
-          res.push((opcode << 24) | (real_arg & ((1 << 24) - 1)));
+          res.push((head << 24) | (real_arg & ((1 << 24) - 1)));
           break;
         }
-        case op.load_dynamic:
-        case op.store_dynamic:
-          if (typeof arg != "number") throw "arg type error";
-          res.push((opcode << 24) | (arg & ((1 << 24) - 1)));
+        case op.lld:
+        case op.lrd:
+        case op.lldi:
+        case op.lrdi:
+        case op.sld:
+        case op.srd:
+        case op.sldi:
+        case op.srdi:
+          res.push((head << 24) | (arg & ((1 << 24) - 1)));
+          break;
+        case op.unopl:
+        case op.unopr:
+        case op.binopl:
+        case op.binopr:
+          res.push((head << 24) | (arg << 16));
           break;
         case op.nop:
-        case op.load:
-        case op.store:
-        case op.shift:
-          res.push(opcode << 24);
-          break;
-        case op.reduce:
-          if (typeof arg != "number") throw "arg type error";
-          res.push((opcode << 24) | (arg << 16));
+        case op.swp:
+        case op.ret:
+          res.push(head << 24);
           break;
         default:
-          throw "unsupported";
+          throw "[assembler] unsupported instruction";
       }
     }
   }
