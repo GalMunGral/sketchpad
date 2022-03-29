@@ -38,7 +38,6 @@ export function compile(program) {
   program.forEach((expr) => {
     if (expr[0] == FUNC) compile_func(expr);
   });
-  code_section.push([S.ret]);
 
   return [[S.jmp, "main"], ...optimize(code_section), ...data_section];
 
@@ -112,6 +111,7 @@ export function compile(program) {
     code_section.push([name]);
     body.forEach((expr) => compile_expression(expr, i + 1));
     code_section.push([S.sld, -2]);
+    code_section.push([S.ret]);
 
     function compile_literal(num) {
       num |= 0;
