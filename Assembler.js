@@ -1,4 +1,4 @@
-import { op } from "./CPU.js";
+import { B, O, S, U } from "./CPU.js";
 
 export function assemble(text) {
   const tags = {};
@@ -19,42 +19,44 @@ export function assemble(text) {
       res.push(head);
     } else {
       switch (head) {
-        case op.brl:
-        case op.brr:
-        case op.jmp:
-        case op.call:
-        case op.lls:
-        case op.lrs:
-        case op.llsi:
-        case op.lrsi:
-        case op.sls:
-        case op.srs:
-        case op.slsi:
-        case op.srsi: {
+        case S.brl:
+        case S.brr:
+        case S.jmp:
+        case S.call:
+        case S.lls:
+        case S.lrs:
+        case S.llsi:
+        case S.lrsi:
+        case S.sls:
+        case S.srs:
+        case S.slsi:
+        case S.srsi: {
           const real_arg = typeof arg == "string" ? tags[arg] : arg;
-          res.push((head << 24) | (real_arg & ((1 << 24) - 1)));
+          res.push((O[head] << 24) | (real_arg & ((1 << 24) - 1)));
           break;
         }
-        case op.lld:
-        case op.lrd:
-        case op.lldi:
-        case op.lrdi:
-        case op.sld:
-        case op.srd:
-        case op.sldi:
-        case op.srdi:
-          res.push((head << 24) | (arg & ((1 << 24) - 1)));
+        case S.lld:
+        case S.lrd:
+        case S.lldi:
+        case S.lrdi:
+        case S.sld:
+        case S.srd:
+        case S.sldi:
+        case S.srdi:
+          res.push((O[head] << 24) | (arg & ((1 << 24) - 1)));
           break;
-        case op.unopl:
-        case op.unopr:
-        case op.binopl:
-        case op.binopr:
-          res.push((head << 24) | (arg << 16));
+        case S.unopl:
+        case S.unopr:
+          res.push((O[head] << 24) | (U[arg] << 16));
           break;
-        case op.nop:
-        case op.swp:
-        case op.ret:
-          res.push(head << 24);
+        case S.binopl:
+        case S.binopr:
+          res.push((O[head] << 24) | (B[arg] << 16));
+          break;
+        case S.nop:
+        case S.swp:
+        case S.ret:
+          res.push(O[head] << 24);
           break;
         default:
           throw "[assembler] unsupported instruction";

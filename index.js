@@ -1,28 +1,31 @@
 import { assemble } from "./Assembler.js";
-import { compile } from "./Compiler.js";
-import { op, run, B } from "./CPU.js";
+import { compile, FUNC, IF, VAR } from "./Compiler.js";
+import { run, S } from "./CPU.js";
 
-const VAR = "VAR";
-const FUNC = "FUNC";
-const SET = "SET";
-const IF = 'IF';
-
-// TODO OPERATOR;
-const binary = assemble(
-  compile([
-    [VAR, "x"],
-    [FUNC, "main", [], [["fib", 10]]],
+const asm = compile([
+  [VAR, "x"],
+  [FUNC, "main", [], [["fib", 10]]],
+  [
+    FUNC,
+    "fib",
+    ["n"],
     [
-      FUNC,
-      "fib",
-      ["n"],
-      [IF ["+" [[B["+"], ["fib", [B["-"], "n", 1]], ["fib", [B["-"], "n", 2]]]],
+      [
+        IF,
+        [S["<"], "n", 2],
+        [1],
+        [[S["+"], ["fib", [S["-"], "n", 1]], ["fib", [S["-"], "n", 2]]]],
+      ],
     ],
-  ])
-);
+  ],
+]);
+
+console.log(asm);
+
+// const binary = assemble(asm);
 
 // const binary = assemble([
-//   [op.jmp, "begin"],
+//   [S.jmp, "begin"],
 //   ["0"],
 //   [0],
 //   ["1"],
@@ -36,47 +39,47 @@ const binary = assemble(
 //   ["m"],
 //   [0],
 //   ["begin"],
-//   [op.lrs, "n"],
-//   [op.srs, "m"],
+//   [S.lrs, "n"],
+//   [S.srs, "m"],
 //   ["loop"],
-//   [op.lls, "m"],
-//   [op.lrs, "0"],
-//   [op.binopr, B["<="]],
-//   [op.brr, -1],
-//   [op.lls, "m"],
-//   [op.sld, 4],
-//   [op.call, "fibonacci"],
-//   [op.lls, "m"],
-//   [op.lrs, "1"],
-//   [op.binopl, B["-"]],
-//   [op.sls, "m"],
-//   [op.jmp, "loop"],
+//   [S.lls, "m"],
+//   [S.lrs, "0"],
+//   [S.binopr, S["<="]],
+//   [S.brr, -1],
+//   [S.lls, "m"],
+//   [S.sld, 4],
+//   [S.call, "fibonacci"],
+//   [S.lls, "m"],
+//   [S.lrs, "1"],
+//   [S.binopl, S["-"]],
+//   [S.sls, "m"],
+//   [S.jmp, "loop"],
 //   [1],
 //   ["fibonacci"],
-//   [op.lld, 1],
-//   [op.lrs, "2"],
-//   [op.binopr, B["<"]],
-//   [op.brr, "fib-base"],
-//   [op.lrs, "1"],
-//   [op.binopr, B["-"]],
-//   [op.srd, 5],
-//   [op.call, "fibonacci"],
-//   [op.lld, 2],
-//   [op.sld, -2],
-//   [op.lld, 1],
-//   [op.lrs, "2"],
-//   [op.binopr, B["-"]],
-//   [op.srd, 5],
-//   [op.call, "fibonacci"],
-//   [op.lld, -2],
-//   [op.lrd, 2],
-//   [op.binopl, B["+"]],
-//   [op.sld, -2],
-//   [op.ret],
+//   [S.lld, 1],
+//   [S.lrs, "2"],
+//   [S.binopr, S["<"]],
+//   [S.brr, "fib-base"],
+//   [S.lrs, "1"],
+//   [S.binopr, S["-"]],
+//   [S.srd, 5],
+//   [S.call, "fibonacci"],
+//   [S.lld, 2],
+//   [S.sld, -2],
+//   [S.lld, 1],
+//   [S.lrs, "2"],
+//   [S.binopr, S["-"]],
+//   [S.srd, 5],
+//   [S.call, "fibonacci"],
+//   [S.lld, -2],
+//   [S.lrd, 2],
+//   [S.binopl, S["+"]],
+//   [S.sld, -2],
+//   [S.ret],
 //   ["fib-base"],
-//   [op.lls, "1"],
-//   [op.sld, -2],
-//   [op.ret],
+//   [S.lls, "1"],
+//   [S.sld, -2],
+//   [S.ret],
 // ]);
 
 run(binary);

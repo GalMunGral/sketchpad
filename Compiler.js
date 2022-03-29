@@ -1,4 +1,9 @@
-import { B, op, U } from "./CPU.js";
+import { B, S, U } from "./CPU.js";
+
+export const VAR = Symbol("VAR");
+export const FUNC = Symbol("FUNC");
+export const SET = Symbol("SET");
+export const IF = Symbol("IF");
 
 export function compile(program) {
   const global_vars = {};
@@ -9,7 +14,7 @@ export function compile(program) {
 
   for (const expr of program) {
     switch (expr[0]) {
-      case "FUNC":
+      case FUNC:
         if (expr.length != 4) throw new Error("Syntax Error [FUNC]");
         if (expr[1] in global_vars)
           throw new Error("function already declared");
@@ -17,7 +22,7 @@ export function compile(program) {
           n_params: expr[2].length,
         };
         break;
-      case "VAR":
+      case VAR:
         if (expr.length != 2) throw new Error("Syntax Error [VAR]");
         if (expr[1] in global_vars)
           throw new Error("variable already declared");
@@ -31,10 +36,32 @@ export function compile(program) {
   }
 
   program.forEach((expr) => {
-    if (expr[0] == "FUNC") compile_func(expr);
+    if (expr[0] == FUNC) compile_func(expr);
   });
+  code_section.push([S.ret]);
 
-  return [[op.jmp, "main"], ...code_section, ...data_section];
+  return [[S.jmp, "main"], ...optimize(code_section), ...data_section];
+
+  function optimize(code) {
+    const res = [code[0]];
+    for (let i = 1; i < code.length; ++i) {
+      if (
+        ((code[i - 1][0] == S.sls && code[i][0] == S.lls) ||
+          (code[i - 1][0] == S.srs && code[i][0] == S.lrs) ||
+          (code[i - 1][0] == S.slsi && code[i][0] == S.llsi) ||
+          (code[i - 1][0] == S.srsi && code[i][0] == S.lrsi) ||
+          (code[i - 1][0] == S.sld && code[i][0] == S.lld) ||
+          (code[i - 1][0] == S.sld && code[i][0] == S.lrd) ||
+          (code[i - 1][0] == S.sldi && code[i][0] == S.lldi) ||
+          (code[i - 1][0] == S.srdi && code[i][0] == S.lrdi)) &&
+        code[i - 1][1] == code[i][1]
+      ) {
+        continue;
+      }
+      res.push(code[i]);
+    }
+    return res;
+  }
 
   function alloc_stack(defn) {
     const [, , params, body] = defn;
@@ -44,7 +71,7 @@ export function compile(program) {
 
     const local_vars = {};
     for (const [i, name] of params.entries()) {
-      local_vars[name] = i;
+      local_vars[name] = i + 1; // starts from 1
     }
 
     body.forEach(check);
@@ -55,20 +82,20 @@ export function compile(program) {
       if (!Array.isArray(expr)) return;
       if (!expr.length) throw new Error("empty list");
       switch (expr[0]) {
-        case "FUNC":
+        case FUNC:
           throw new Error("FUNC declaration must be global");
-        case "VAR":
+        case VAR:
           if (expr.length != 2) throw new Error("Syntax error [VAR]");
           local_vars[expr[1]] = i;
           ++i;
           ++j;
           break;
-        case "IF":
+        case IF:
           if (expr.length != 4) throw new Error("Syntax error [IF]");
-          traverse(expr[1]);
+          check(expr[1]);
           expr[2].forEach(check);
           expr[3].forEach(check);
-        case "SET":
+        case SET:
           break;
         default:
           j = Math.max(j, i + expr.length - 1);
@@ -78,11 +105,13 @@ export function compile(program) {
   }
 
   function compile_func(defn) {
+    const [, name, params, body] = defn;
     const { local_vars, i, j } = alloc_stack(defn);
-    const [, name, , body] = defn;
+
+    code_section.push([j + 3]); // stack size
     code_section.push([name]);
-    body.forEach((expr) => compile_expression(expr, i));
-    code_section.push([op.sld, -2]);
+    body.forEach((expr) => compile_expression(expr, i + 1));
+    code_section.push([S.sld, -2]);
 
     function compile_literal(num) {
       num |= 0;
@@ -92,14 +121,14 @@ export function compile(program) {
         data_section.push([name]);
         data_section.push([num]);
       }
-      code_section.push([op.lls, name]);
+      code_section.push([S.lls, name]);
     }
 
     function compile_reference(name) {
       if (name in local_vars) {
-        code_section.push([op.lld, local_vars[name]]);
+        code_section.push([S.lld, local_vars[name]]);
       } else if (name in global_vars) {
-        code_section.push([op.lls, name]);
+        code_section.push([S.lls, name]);
       } else {
         throw new Error(`Reference Error ${name}`);
       }
@@ -109,9 +138,9 @@ export function compile(program) {
       const [_, name, value] = expr;
       compile_expression(value, k);
       if (name in local_vars) {
-        code_section.push([op.sld, local_vars[name]]);
+        code_section.push([S.sld, local_vars[name]]);
       } else if (name in global_vars) {
-        code_section.push([op.sls, name]);
+        code_section.push([S.sls, name]);
       } else {
         throw new Error(`Reference Error ${name}`);
       }
@@ -122,9 +151,9 @@ export function compile(program) {
       const if_tag = "IF-" + tag_id++;
       const if_end_tag = "IF-END-" + tag_id++;
       compile_expression(condition, k);
-      code_section.push([op.brl, if_tag]);
+      code_section.push([S.brl, if_tag]);
       else_branch.forEach((e) => compile_expression(e, k));
-      code_section.push([op.jmp, if_end_tag]);
+      code_section.push([S.jmp, if_end_tag]);
       code_section.push([if_tag]);
       if_branch.forEach((e) => compile_expression(e, k));
       code_section.push([if_end_tag]);
@@ -133,17 +162,17 @@ export function compile(program) {
     function compile_unary_op(expr, k) {
       if (expr.length != 2) throw new Error("unary");
       compile_expression(expr[1], k);
-      code_section.push([op.unopl, U[expr[0]]]);
+      code_section.push([S.unopl, expr[0]]);
     }
 
     function compile_binary_op(expr, k) {
       if (expr.length != 3) throw new Error("binary");
       compile_expression(expr[1], k);
-      code_section.push([op.sld, k]);
+      code_section.push([S.sld, k]);
       compile_expression(expr[2], k + 1);
-      code_section.push([op.swp]);
-      code_section.push([op.lld, k]);
-      code_section.push([op.binopl, B[expr[0]]]);
+      code_section.push([S.swp]);
+      code_section.push([S.lld, k]);
+      code_section.push([S.binopl, expr[0]]);
     }
 
     function compile_application(expr, k) {
@@ -155,14 +184,14 @@ export function compile(program) {
       } else {
         args.forEach((arg, i) => {
           compile_expression(arg, k + i);
-          code_section.push([op.sld, k + i]);
+          code_section.push([S.sld, k + i]);
         });
         for (let i = 0; i < args.length; ++i) {
-          code_section.push([op.lld, k + i]);
-          code_section.push([op.sld, j + 3 + i]);
+          code_section.push([S.lld, k + i]);
+          code_section.push([S.sld, 1 + j + 3 + i]);
         }
-        code_section.push([op.call, name]);
-        code_section.push([op.lld, j]);
+        code_section.push([S.call, name]);
+        code_section.push([S.lld, j + 1]);
       }
     }
 
@@ -174,12 +203,12 @@ export function compile(program) {
           return compile_reference(expr);
         default:
           switch (expr[0]) {
-            case "VAR":
+            case VAR:
               break;
-            case "IF":
+            case IF:
               compile_conditional(expr, k);
               break;
-            case "SET":
+            case SET:
               compile_assignment(expr, k);
               break;
             default:

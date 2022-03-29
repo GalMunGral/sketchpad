@@ -1,60 +1,111 @@
 import { read_word as read, write_word as write } from "./RAM.js";
 
-export const op = {
-  nop: { toString: () => "nop", valueOf: () => 0x00 },
-  lls: { toString: () => "lls", valueOf: () => 0x10 },
-  lrs: { toString: () => "lrs", valueOf: () => 0x11 },
-  llsi: { toString: () => "llsi", valueOf: () => 0x12 },
-  lrsi: { toString: () => "lrsi", valueOf: () => 0x13 },
-  lld: { toString: () => "lld", valueOf: () => 0x14 },
-  lrd: { toString: () => "lrd", valueOf: () => 0x15 },
-  lldi: { toString: () => "lldi", valueOf: () => 0x16 },
-  lrdi: { toString: () => "lrdi", valueOf: () => 0x17 },
-  sls: { toString: () => "sls", valueOf: () => 0x20 },
-  srs: { toString: () => "srs", valueOf: () => 0x21 },
-  slsi: { toString: () => "slsi", valueOf: () => 0x22 },
-  srsi: { toString: () => "srsi", valueOf: () => 0x23 },
-  sld: { toString: () => "sld", valueOf: () => 0x24 },
-  srd: { toString: () => "srd", valueOf: () => 0x25 },
-  sldi: { toString: () => "sldi", valueOf: () => 0x26 },
-  srdi: { toString: () => "srdi", valueOf: () => 0x27 },
-  unopl: { toString: () => "unopl", valueOf: () => 0x30 },
-  unopr: { toString: () => "unopr", valueOf: () => 0x31 },
-  binopl: { toString: () => "binopl", valueOf: () => 0x32 },
-  binopr: { toString: () => "binopr", valueOf: () => 0x33 },
-  swp: { toString: () => "swp", valueOf: () => 0x34 },
-  brl: { toString: () => "brl", valueOf: () => 0x40 },
-  brr: { toString: () => "brr", valueOf: () => 0x41 },
-  jmp: { toString: () => "jmp", valueOf: () => 0x42 },
-  call: { toString: () => "call", valueOf: () => 0x43 },
-  ret: { toString: () => "ret", valueOf: () => 0x44 },
+export const S = {
+  nop: Symbol("NOP"),
+  lls: Symbol("LLS"),
+  lrs: Symbol("LRS"),
+  llsi: Symbol("LLSI"),
+  lrsi: Symbol("LRSI"),
+  lld: Symbol("LLD"),
+  lrd: Symbol("LRD"),
+  lldi: Symbol("LLDI"),
+  lrdi: Symbol("LRDI"),
+  sls: Symbol("SLS"),
+  srs: Symbol("SRS"),
+  slsi: Symbol("SLSI"),
+  srsi: Symbol("SRSI"),
+  sld: Symbol("SLD"),
+  srd: Symbol("SRD"),
+  sldi: Symbol("SLDI"),
+  srdi: Symbol("SRDI"),
+  unopl: Symbol("UNOPL"),
+  unopr: Symbol("UNOPR"),
+  binopl: Symbol("BINOPL"),
+  binopr: Symbol("BINOPR"),
+  swp: Symbol("SWP"),
+  brl: Symbol("BRL"),
+  brr: Symbol("BRR"),
+  jmp: Symbol("JMP"),
+  call: Symbol("CALL"),
+  ret: Symbol("RET"),
+  "~": Symbol("~"),
+  "!": Symbol("!"),
+  ">>": Symbol(">>"),
+  "<<": Symbol("<<"),
+  "&": Symbol("&"),
+  "|": Symbol("|"),
+  "^": Symbol("^"),
+  "==": Symbol("=="),
+  "!=": Symbol("!="),
+  "<=": Symbol("<="),
+  ">=": Symbol(">="),
+  "<": Symbol("<"),
+  ">": Symbol(">"),
+  "&&": Symbol("&&"),
+  "||": Symbol("||"),
+  "+": Symbol("+"),
+  "-": Symbol("-"),
+  "*": Symbol("*"),
+  "/": Symbol("/"),
+  "%": Symbol("%"),
+  "**": Symbol("**"),
+};
+
+export const O = {
+  [S.nop]: 0x00,
+  [S.lls]: 0x10,
+  [S.lrs]: 0x11,
+  [S.llsi]: 0x12,
+  [S.lrsi]: 0x13,
+  [S.lld]: 0x14,
+  [S.lrd]: 0x15,
+  [S.lldi]: 0x16,
+  [S.lrdi]: 0x17,
+  [S.sls]: 0x20,
+  [S.srs]: 0x21,
+  [S.slsi]: 0x22,
+  [S.srsi]: 0x23,
+  [S.sld]: 0x24,
+  [S.srd]: 0x25,
+  [S.sldi]: 0x26,
+  [S.srdi]: 0x27,
+  [S.unopl]: 0x30,
+  [S.unopr]: 0x31,
+  [S.binopl]: 0x32,
+  [S.binopr]: 0x33,
+  [S.swp]: 0x34,
+  [S.brl]: 0x40,
+  [S.brr]: 0x41,
+  [S.jmp]: 0x42,
+  [S.call]: 0x43,
+  [S.ret]: 0x44,
 };
 
 export const U = {
-  "~": { toString: () => "~", valueOf: () => 0x00 },
-  "!": { toString: () => "!", valueOF: () => 0x01 },
+  [S["~"]]: 0x00,
+  [S["!"]]: 0x01,
 };
 
 export const B = {
-  ">>": { toString: () => ">>", valueOf: () => 0x10 },
-  "<<": { toString: () => "<<", valueOf: () => 0x11 },
-  "&": { toString: () => "&", valueOf: () => 0x12 },
-  "|": { toString: () => "|", valueOf: () => 0x13 },
-  "^": { toString: () => "^", valueOf: () => 0x14 },
-  "==": { toString: () => "==", valueOf: () => 0x20 },
-  "!=": { toString: () => "!=", valueOf: () => 0x21 },
-  "<=": { toString: () => "<=", valueOf: () => 0x22 },
-  ">=": { toString: () => ">=", valueOf: () => 0x23 },
-  "<": { toString: () => "<", valueOf: () => 0x24 },
-  ">": { toString: () => ">", valueOf: () => 0x25 },
-  "&&": { toString: () => "&&", valueOf: () => 0x26 },
-  "||": { toString: () => "||", valueOf: () => 0x27 },
-  "+": { toString: () => "+", valueOf: () => 0x30 },
-  "-": { toString: () => "-", valueOf: () => 0x31 },
-  "*": { toString: () => "*", valueOf: () => 0x32 },
-  "/": { toString: () => "/", valueOf: () => 0x33 },
-  "%": { toString: () => "%", valueOf: () => 0x34 },
-  "**": { toString: () => "**", valueOf: () => 0x35 },
+  [S[">>"]]: 0x10,
+  [S["<<"]]: 0x11,
+  [S["&"]]: 0x12,
+  [S["|"]]: 0x13,
+  [S["^"]]: 0x14,
+  [S["=="]]: 0x20,
+  [S["!="]]: 0x21,
+  [S["<="]]: 0x22,
+  [S[">="]]: 0x23,
+  [S["<"]]: 0x24,
+  [S[">"]]: 0x25,
+  [S["&&"]]: 0x26,
+  [S["||"]]: 0x27,
+  [S["+"]]: 0x30,
+  [S["-"]]: 0x31,
+  [S["*"]]: 0x32,
+  [S["/"]]: 0x33,
+  [S["%"]]: 0x34,
+  [S["**"]]: 0x35,
 };
 
 const BASE = 0 | 0x00800000;
@@ -70,9 +121,9 @@ const reg = {
 
 function unary(op, a) {
   switch (op) {
-    case 0 | U["~"]:
+    case U[S["~"]]:
       return ~a;
-    case 0 | ["!"]:
+    case U[S["!"]]:
       return a ? 0 : 1;
     default:
       "Unknown unary operator";
@@ -81,47 +132,47 @@ function unary(op, a) {
 
 function binary(op, l, r) {
   switch (op) {
-    case 0 | B["~"]:
+    case B[S["~"]]:
       return ~l;
-    case 0 | B["!"]:
+    case B[S["!"]]:
       return l ? 0 : 1;
-    case 0 | B[">>"]:
+    case B[S[">>"]]:
       return l >> r;
-    case 0 | B["<<"]:
+    case B[S["<<"]]:
       return l << r;
-    case 0 | B["&"]:
+    case B[["&"]]:
       return l & r;
-    case 0 | B["|"]:
+    case B[["|"]]:
       return l | r;
-    case 0 | B["^"]:
+    case B[S["^"]]:
       return l ^ r;
-    case 0 | B["=="]:
+    case B[S["=="]]:
       return l == r ? 1 : 0;
-    case 0 | B["!="]:
+    case B[S["!="]]:
       return l != r ? 1 : 0;
-    case 0 | B["<="]:
+    case B[S["<="]]:
       return l <= r ? 1 : 0;
-    case 0 | B[">="]:
+    case B[S[">="]]:
       return l >= r ? 1 : 0;
-    case 0 | B["<"]:
+    case B[S["<"]]:
       return l < r ? 1 : 0;
-    case 0 | B[">"]:
+    case B[S[">"]]:
       return l > r ? 1 : 0;
-    case 0 | B["&&"]:
+    case B[S["&&"]]:
       return l && r ? 1 : 0;
-    case 0 | ["||"]:
+    case B[S["||"]]:
       return l || r ? 1 : 0;
-    case 0 | B["+"]:
+    case B[S["+"]]:
       return 0 | (l + r);
-    case 0 | B["-"]:
+    case B[S["-"]]:
       return 0 | (l - r);
-    case 0 | B["*"]:
+    case B[S["*"]]:
       return 0 | (l * r);
-    case 0 | B["/"]:
+    case B[S["/"]]:
       return 0 | (l / r);
-    case 0 | B["%"]:
+    case B[S["%"]]:
       return 0 | l % r;
-    case 0 | B["**"]:
+    case B[S["**"]]:
       return 0 | (l ** r);
     default:
       throw "Unknown binary operator";
@@ -144,81 +195,81 @@ export function run(program) {
       const operator = (instr << 8) >> 24;
 
       switch (opcode) {
-        case 0 | op.nop:
+        case O[S.nop]:
           break;
-        case 0 | op.lls:
+        case O[S.lls]:
           reg.l = read(BASE + offset);
           break;
-        case 0 | op.lrs:
+        case O[S.lrs]:
           reg.r = read(BASE + offset);
           break;
-        case 0 | op.llsi:
+        case O[S.llsi]:
           reg.l = read(read(BASE + offset));
           break;
-        case 0 | op.lrsi:
+        case O[S.lrsi]:
           reg.r = read(read(BASE + offset));
           break;
-        case 0 | op.lld:
+        case O[S.lld]:
           reg.l = read(reg.spl + offset);
           break;
-        case 0 | op.lrd:
+        case O[S.lrd]:
           reg.r = read(reg.spl + offset);
           break;
-        case 0 | op.lldi:
+        case O[S.lldi]:
           reg.l = read(read(reg.spl + offset));
           break;
-        case 0 | op.lrdi:
+        case O[S.lrdi]:
           reg.r = read(read(reg.spl + offset));
           break;
-        case 0 | op.sls:
+        case O[S.sls]:
           write(BASE + offset, reg.l);
           break;
-        case 0 | op.srs:
+        case O[S.srs]:
           write(BASE + offset, reg.r);
           break;
-        case 0 | op.slsi:
+        case O[S.slsi]:
           write(read(BASE + offset), reg.l);
           break;
-        case op.srsi:
+        case O[S.srsi]:
           write(read(BASE + offset), reg.r);
           break;
-        case 0 | op.sld:
+        case O[S.sld]:
           write(reg.spl + offset, reg.l);
           break;
-        case 0 | op.srd:
+        case O[S.srd]:
           write(reg.spl + offset, reg.r);
           break;
-        case 0 | op.sldi:
+        case O[S.sldi]:
           write(read(reg.spl + offset), reg.l);
           break;
-        case 0 | op.srdi:
+        case O[S.srdi]:
           write(read(reg.spl + offset), reg.r);
           break;
-        case 0 | op.unopl:
+        case O[S.unopl]:
           reg.l = unary(operator, reg.l);
           break;
-        case 0 | op.unopr:
+        case O[S.unopr]:
           reg.r = unary(operator, reg.r);
           break;
-        case 0 | op.binopl:
+        case O[S.binopl]:
           reg.l = binary(operator, reg.l, reg.r);
           break;
-        case 0 | op.binopr:
+        case O[S.binopr]:
           reg.r = binary(operator, reg.l, reg.r);
           break;
-        case 0 | op.swp:
+        case O[S.swp]:
           [reg.l, reg.r] = [reg.r, reg.l];
           break;
-        case 0 | op.brl:
+        case O[S.brl]:
           if (reg.l) reg.pc = BASE + offset;
           break;
-        case 0 | op.brr:
+        case O[S.brr]:
           if (reg.r) reg.pc = BASE + offset;
           break;
-        case 0 | op.jmp:
+        case O[S.jmp]:
           reg.pc = BASE + offset;
           break;
-        case 0 | op.call: {
+        case O[S.call]: {
           const next = BASE + offset;
           const stack_size = read(next - 1) + 3;
           write(reg.spr - 1, reg.pc);
@@ -229,7 +280,7 @@ export function run(program) {
           console.groupCollapsed();
           break;
         }
-        case 0 | op.ret:
+        case O[S.ret]:
           reg.spr = reg.spl;
           reg.spl = read(reg.spr);
           reg.pc = read(reg.spr - 1);
