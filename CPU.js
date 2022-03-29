@@ -216,7 +216,6 @@ export function run(program) {
           if (reg.r) reg.pc = BASE + offset;
           break;
         case 0 | op.jmp:
-          console.log("jump");
           reg.pc = BASE + offset;
           break;
         case 0 | op.call: {

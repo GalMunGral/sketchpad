@@ -1,9 +1,9 @@
 import { op } from "./CPU.js";
 
 export function assemble(text) {
-  // console.log(text.map((line) => line.map(String).join(" ")).join("\n"));
-
   const tags = {};
+  const res = [];
+
   let offset = 0;
   for (const [head] of text) {
     if (typeof head == "string") {
@@ -13,7 +13,6 @@ export function assemble(text) {
     }
   }
 
-  const res = [];
   for (const [head, arg] of text) {
     if (typeof head == "string") continue;
     if (typeof head == "number") {
