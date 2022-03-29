@@ -1,24 +1,25 @@
 import { assemble } from "./Assembler.js";
-import { VAR, compile, FUNC, SET } from "./Compiler.js";
+import { compile } from "./Compiler.js";
 import { op, run, B } from "./CPU.js";
 
-const binary = compile([
-  ["VAR", "x"],
-  [FUNC, "fib", ["n"], ["+", ["fib", ["-", "n", 1]], ["fib", ["-", "n", 2]]]],
-  [
-    FUNC,
-    "fib_squared",
-    ["n"],
+const VAR = "VAR";
+const FUNC = "FUNC";
+const SET = "SET";
+const IF = 'IF';
+
+// TODO OPERATOR;
+const binary = assemble(
+  compile([
+    [VAR, "x"],
+    [FUNC, "main", [], [["fib", 10]]],
     [
-      [VAR, "a"],
-      [VAR, "b"],
-      [SET, "a", ["+", ["fib", "n"], ["fib", ["-", "n", 1]]]],
-      [SET, "b", ["*", "a", "a"]],
-      ["b"],
+      FUNC,
+      "fib",
+      ["n"],
+      [IF ["+" [[B["+"], ["fib", [B["-"], "n", 1]], ["fib", [B["-"], "n", 2]]]],
     ],
-  ],
-  ["x"],
-]);
+  ])
+);
 
 // const binary = assemble([
 //   [op.jmp, "begin"],
