@@ -25,4 +25,80 @@
     ></canvas>
   </div>
 </div>
-<script src="./index.js" type="module"></script>
+<script type="module">
+  import { assemble } from "./Assembler.js";
+  import { compile, FUNCTION, IF, INIT, SET, WHILE } from "./Compiler.js";
+  import { run, S } from "./CPU.js";
+
+  const program = [
+    [INIT, "frame_buffer", 0],
+    [INIT, "alert", 0x7fffff],
+    [INIT, "row_size", 800],
+    [INIT, "col_size", 650],
+    [
+      FUNCTION,
+      "main",
+      [],
+      [
+        [
+          WHILE,
+          1,
+          [
+            ["draw", 0, 0, 800, 600, 255, 0, 0],
+            ["draw", 0, 0, 800, 600, 0, 255, 0],
+            ["draw", 0, 0, 800, 600, 0, 0, 255],
+          ],
+        ],
+      ],
+    ],
+    [
+      FUNCTION,
+      "draw",
+      ["x", "y", "w", "h", "r", "g", "b"],
+      [
+        [
+          INIT,
+          "color",
+          [S["|"], [S["|"], [S["<<"], "r", 16], [S["<<"], "g", 8]], "b"],
+        ],
+        [INIT, "i", "y"],
+        [
+          WHILE,
+          [S["<"], "i", [S["+"], "y", "h"]],
+          [
+            [INIT, "j", "x"],
+            [
+              WHILE,
+              [S["<"], "j", [S["+"], "x", "w"]],
+              [
+                [INIT, "offset", [S["+"], [S["*"], "i", "row_size"], "j"]],
+                // [SET, "*alert", "offset"],
+                ["memset", "frame_buffer", "offset", "color"],
+                [SET, "j", [S["+"], "j", 1]],
+              ],
+            ],
+            [SET, "i", [S["+"], "i", 1]],
+          ],
+        ],
+      ],
+    ],
+    [
+      FUNCTION,
+      "memset",
+      ["base", "offset", "value"],
+      [
+        [SET, "base", [S["+"], "base", "offset"]],
+        [SET, "*base", "value"],
+      ],
+    ],
+  ];
+
+  const asm = compile(program);
+  const binary = assemble(asm);
+
+  console.log(program);
+  console.log(asm);
+  console.log(binary);
+
+  run(binary);
+</script>

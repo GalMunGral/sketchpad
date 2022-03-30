@@ -1,9 +1,10 @@
 import { B, S, U } from "./CPU.js";
 
-export const LET = Symbol("LET");
-export const FUNC = Symbol("FUNC");
+export const FUNCTION = Symbol("FUNCTION");
+export const INIT = Symbol("INIT");
 export const SET = Symbol("SET");
 export const IF = Symbol("IF");
+export const WHILE = Symbol("WHILE");
 
 export function compile(program) {
   let tag_id = 0;
@@ -16,7 +17,7 @@ export function compile(program) {
 
   for (const expr of program) {
     switch (expr[0]) {
-      case FUNC:
+      case FUNCTION:
         if (expr.length != 4) throw new Error("Syntax Error [FUNC]");
         if (expr[1] in global_vars)
           throw new Error("function already declared");
@@ -24,7 +25,7 @@ export function compile(program) {
           n_params: expr[2].length,
         };
         break;
-      case LET:
+      case INIT:
         if (expr.length < 2 || expr.length > 3)
           throw new Error("Syntax Error [VAR]");
         if (expr[1] in global_vars)
@@ -42,7 +43,7 @@ export function compile(program) {
   }
 
   program.forEach((expr) => {
-    if (expr[0] == FUNC) compile_func(expr);
+    if (expr[0] == FUNCTION) compile_func(expr);
   });
 
   return [
@@ -92,22 +93,36 @@ export function compile(program) {
       if (!Array.isArray(expr)) return;
       if (!expr.length) throw new Error("empty list");
       switch (expr[0]) {
-        case FUNC:
-          throw new Error("FUNC declaration must be global");
-        case LET:
-          if (expr.length < 2 || expr.length > 3)
-            throw new Error("Syntax error [VAR]");
+        case FUNCTION:
+          throw new Error("FUNCTION cannot be nested");
+        case INIT:
+          if (expr.length < 2 || expr.length > 3) {
+            throw new Error("Syntax error [INIT]");
+          }
           local_vars[expr[1]] = i;
           ++i;
           ++j;
+          if (expr.length == 3) check(expr[2]);
+          break;
+        case SET:
+          if (expr.length != 3) {
+            throw new Error("Syntax error [SET]");
+          }
+          check(expr[2]);
           break;
         case IF:
-          if (expr.length != 4) throw new Error("Syntax error [IF]");
+          if (expr.length != 4) {
+            throw new Error("Syntax error [IF]");
+          }
           check(expr[1]);
           expr[2].forEach(check);
           expr[3].forEach(check);
-        case SET:
-          break;
+        case WHILE:
+          if (expr.length != 3) {
+            throw new Error("Syntax error [WHILE]");
+          }
+          check(expr[1]);
+          expr[2].forEach(check);
         default:
           j = Math.max(j, i + expr.length - 1);
           expr.slice(1).forEach(check);
@@ -137,22 +152,32 @@ export function compile(program) {
     }
 
     function compile_reference(name) {
+      let indirect = false;
+      if (name[0] == "*") {
+        indirect = true;
+        name = name.slice(1);
+      }
       if (name in local_vars) {
-        code_section.push([S.lld, local_vars[name]]);
+        code_section.push([indirect ? S.lldi : S.lld, local_vars[name]]);
       } else if (name in global_vars) {
-        code_section.push([S.lls, name]);
+        code_section.push([indirect ? S.llsi : S.lls, name]);
       } else {
         throw new Error(`Reference Error ${name}`);
       }
     }
 
     function compile_assignment(expr, k) {
-      const [_, name, value] = expr;
+      let [_, name, value] = expr;
+      let indirect = false;
+      if (name[0] == "*") {
+        indirect = true;
+        name = name.slice(1);
+      }
       compile_expression(value, k);
       if (name in local_vars) {
-        code_section.push([S.sld, local_vars[name]]);
+        code_section.push([indirect ? S.sldi : S.sld, local_vars[name]]);
       } else if (name in global_vars) {
-        code_section.push([S.sls, name]);
+        code_section.push([indirect ? S.slsi : S.sls, name]);
       } else {
         throw new Error(`Reference Error ${name}`);
       }
@@ -160,15 +185,30 @@ export function compile(program) {
 
     function compile_conditional(expr, k) {
       const [, condition, if_branch, else_branch] = expr;
-      const if_tag = "IF-" + tag_id++;
-      const if_end_tag = "IF-END-" + tag_id++;
+      const IF_TAG = "IF-" + tag_id++;
+      const IF_END_TAG = "IF-END-" + tag_id++;
       compile_expression(condition, k);
-      code_section.push([S.brl, if_tag]);
+      code_section.push([S.brl, IF_TAG]);
       else_branch.forEach((e) => compile_expression(e, k));
-      code_section.push([S.jmp, if_end_tag]);
-      code_section.push([if_tag]);
+      code_section.push([S.jmp, IF_END_TAG]);
+      code_section.push([IF_TAG]);
       if_branch.forEach((e) => compile_expression(e, k));
-      code_section.push([if_end_tag]);
+      code_section.push([IF_END_TAG]);
+    }
+
+    function compile_loop(expr, k) {
+      const [, condition, body] = expr;
+      const LOOP_TAG = "LOOP-" + tag_id++;
+      const LOOP_BEGIN_TAG = "LOOP-BEGIN-" + tag_id++;
+      const LOOP_END_TAG = "LOOP-END-" + tag_id++;
+      code_section.push([LOOP_TAG]);
+      compile_expression(condition, k);
+      code_section.push([S.brl, LOOP_BEGIN_TAG]);
+      code_section.push([S.jmp, LOOP_END_TAG]);
+      code_section.push([LOOP_BEGIN_TAG]);
+      body.forEach((e) => compile_expression(e, k));
+      code_section.push([S.jmp, LOOP_TAG]);
+      code_section.push([LOOP_END_TAG]);
     }
 
     function compile_unary_op(expr, k) {
@@ -219,12 +259,15 @@ export function compile(program) {
           return compile_reference(expr);
         default:
           switch (expr[0]) {
-            case LET:
+            case INIT:
             case SET:
               compile_assignment(expr, k);
               break;
             case IF:
               compile_conditional(expr, k);
+              break;
+            case WHILE:
+              compile_loop(expr, k);
               break;
             default:
               compile_application(expr, k);

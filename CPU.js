@@ -140,9 +140,9 @@ function binary(op, l, r) {
       return l >> r;
     case B[S["<<"]]:
       return l << r;
-    case B[["&"]]:
+    case B[S["&"]]:
       return l & r;
-    case B[["|"]]:
+    case B[S["|"]]:
       return l | r;
     case B[S["^"]]:
       return l ^ r;
@@ -276,15 +276,15 @@ export function run(program) {
           reg.spl = reg.spr;
           reg.spr += stack_size;
           reg.pc = next;
-          console.groupCollapsed();
+          // console.groupCollapsed();
           break;
         }
         case O[S.ret]:
           reg.spr = reg.spl;
           reg.spl = read(reg.spr);
           reg.pc = read(reg.spr - 1);
-          console.log("ret", read(reg.spr - 2));
-          console.groupEnd();
+          // console.log("ret", read(reg.spr - 2));
+          // console.groupEnd();
           break;
         default:
           throw "Unsupported instruction";
