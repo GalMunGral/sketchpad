@@ -226,15 +226,12 @@ export function run(program) {
           reg.spl = reg.spr;
           reg.spr += stack_size;
           reg.pc = next;
-          // console.groupCollapsed();
           break;
         }
         case O[$.ret]:
           reg.spr = reg.spl;
           reg.spl = read(reg.spr);
           reg.pc = read(reg.spr - 1);
-          // console.log("ret", read(reg.spr - 2));
-          // console.groupEnd();
           break;
         default:
           throw "Unsupported instruction";

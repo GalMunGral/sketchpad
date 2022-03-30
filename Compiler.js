@@ -44,20 +44,29 @@ export function compile(source) {
     if (expr[0] == $.FUNC) compile_func(expr);
   });
 
-  return assemble([
+  const asm = [
     [$.call, "main"],
     [$.jmp, -1],
     ...optimize(code_section),
     ...data_section,
-  ]);
+  ];
+
+  const bin = assemble(asm);
+
+  return {
+    ast,
+    asm,
+    bin,
+  };
 
   function parse(s) {
     let i = 0;
     const res = [];
 
+    let expr;
     consume_whitespace();
-    while (i < s.length) {
-      res.push(parse_expression());
+    while ((expr = parse_expression())) {
+      res.push(expr);
     }
     return res;
 
@@ -149,19 +158,21 @@ export function compile(source) {
           }
           check(expr[2]);
           break;
-        case $.COND:
+        case $.IF:
           if (expr.length != 4) {
             throw new Error("Syntax error [IF]");
           }
           check(expr[1]);
           expr[2].forEach(check);
           expr[3].forEach(check);
-        case $.LOOP:
+          break;
+        case $.WHILE:
           if (expr.length != 3) {
             throw new Error("Syntax error [WHILE]");
           }
           check(expr[1]);
           expr[2].forEach(check);
+          break;
         default:
           j = Math.max(j, i + expr.length - 1);
           expr.slice(1).forEach(check);
@@ -281,6 +292,9 @@ export function compile(source) {
           code_section.push([$.lld, k + i]);
           code_section.push([$.sld, 1 + j + 3 + i]);
         }
+        if (!(name in functions)) {
+          throw new Error(`Reference Error: function ${name} not found`);
+        }
         code_section.push([$.call, name]);
         code_section.push([$.lld, j + 1]);
       }
@@ -302,10 +316,10 @@ export function compile(source) {
             case $.SET:
               compile_assignment(expr, k);
               break;
-            case $.COND:
+            case $.IF:
               compile_conditional(expr, k);
               break;
-            case $.LOOP:
+            case $.WHILE:
               compile_loop(expr, k);
               break;
             default:

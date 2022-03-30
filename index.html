@@ -1,42 +1,59 @@
 <!DOCTYPE html>
-<canvas
-  width="800"
-  height="600"
-  style="
-    box-sizing: border-box;
-    max-height: 100%;
-    max-width: 100%;
-    border: 5px solid black;
-  "
-></canvas>
+<body style="background: white; margin: 0">
+  <canvas
+    width="1280"
+    height="800"
+    style="
+      display: block;
+      margin: auto;
+      height: min(calc(100vw * 800 / 1280), 100vh);
+      width: min(calc(100vh * 1280 / 800), 100vw);
+      background: black;
+    "
+  ></canvas>
+</body>
 <script type="module">
   import { compile } from "./Compiler.js";
   import { run } from "./CPU.js";
 
-  const bin = compile(`
-    (INIT frame_buffer 0)
-    (INIT alert 0x7fffff)
-    (INIT row_size 800)
-    (INIT col_size 650)
+  const out = compile(`
+    (INIT FRAME_BUFFER 0)
+    (INIT CONSOLE 0x7ffffe)
+    (INIT HAS_INPUT 0x7ffff0)
+    (INIT INPUT_X 0x7ffff1)
+    (INIT INPUT_Y 0x7ffff2)
+    (INIT ROW_SIZE 1280)
+    (INIT COL_SIZE 800)
     (FUNC main () (
-      (LOOP 1 (
-        (draw 0 0 800 600 255 0 0)
-        (draw 0 0 800 600 0 255 0)
-        (draw 0 0 800 600 0 0 255)))))
+      (INIT c 64)
+      (INIT d 1)
+      (INIT w 4)
+      (WHILE 1 (
+        (IF *HAS_INPUT
+          ((INIT x *INPUT_X)
+            (INIT y *INPUT_Y)
+            (SET c (+ c d))
+            (IF (|| (== c 255) (== c 64))
+              ((SET d (- 0 d)))
+              (0))
+            (draw (- x w) (- y w) (* w 2) (* w 2) c c c))
+          (0))))))
+    (FUNC log (x) (
+      (SET *CONSOLE x)))
     (FUNC draw (x y w h r g b) (
       (INIT color (| (| (<< r 16) (<< g 8)) b))
       (INIT i y)
-      (LOOP (< i (+ y h)) (
-        (INIT j x)
-        (LOOP (< j (+ x w)) (
-          (INIT offset (+ (* i row_size) j))
-          (memset frame_buffer offset color)
-          (SET j (+ j 1))))
-        (SET i (+ i 1))))))
+      (WHILE (< i (+ y h)) 
+        ((INIT j x)
+          (WHILE (< j (+ x w))
+            ((INIT offset (+ (* i ROW_SIZE) j))
+              (memset FRAME_BUFFER offset color)
+              (SET j (+ j 1))))
+          (SET i (+ i 1))))))
     (FUNC memset (base offset value) (
       (SET base (+ base offset))
       (SET *base value)))
   `);
-  console.log(bin);
-  run(bin);
+  console.log(out);
+  run(out.bin);
 </script>

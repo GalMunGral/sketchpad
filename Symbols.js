@@ -50,6 +50,6 @@ export const $ = {
   FUNC: Symbol("FUNC"),
   INIT: Symbol("INIT"),
   SET: Symbol("SET"),
-  COND: Symbol("COND"),
-  LOOP: Symbol("WHILE"),
+  IF: Symbol("IF"),
+  WHILE: Symbol("WHILE"),
 };

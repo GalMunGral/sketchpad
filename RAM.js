@@ -1,12 +1,31 @@
 const memory = (window.memory = Array(10000));
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
-const ROW_SIZE = 800;
-const COL_SIZE = 600;
+const ROW_SIZE = 1280;
+const COL_SIZE = 800;
 const frame_buffer_size = ROW_SIZE * COL_SIZE;
+
+let has_event = 0;
+let event_x = 0;
+let event_y = 0;
+
+canvas.onmousemove = (e) => {
+  const { left, top, height, width } = canvas.getBoundingClientRect();
+  event_x = Math.round(ROW_SIZE * ((e.clientX - left) / width));
+  event_y = Math.round(COL_SIZE * ((e.clientY - top) / height));
+  has_event = 1;
+};
 
 export function read(addr) {
   switch (addr) {
+    case 0x7ffff0:
+      return has_event;
+    case 0x7ffff1:
+      has_event = 0;
+      return event_x;
+    case 0x7ffff2:
+      has_event = 0;
+      return event_y;
     case 0x7fffff:
       return 0 | prompt();
     default:
@@ -16,6 +35,9 @@ export function read(addr) {
 
 export function write(addr, data) {
   switch (addr) {
+    case 0x7ffffe:
+      console.log("[output]", data);
+      break;
     case 0x7fffff:
       alert(data);
       break;
