@@ -6,11 +6,13 @@ export const SET = Symbol("SET");
 export const IF = Symbol("IF");
 
 export function compile(program) {
+  let tag_id = 0;
+  let symbol_id = 0x80000000;
+  const symbols = {};
   const global_vars = {};
   const functions = {};
   const data_section = [];
   const code_section = [];
-  let tag_id = 0;
 
   for (const expr of program) {
     switch (expr[0]) {
@@ -210,6 +212,10 @@ export function compile(program) {
         case "number":
           return compile_literal(expr);
         case "string":
+          if (expr[0] == "@") {
+            if (!(expr in symbols)) symbols[expr] = symbol_id++;
+            return compile_literal(symbols[expr]);
+          }
           return compile_reference(expr);
         default:
           switch (expr[0]) {

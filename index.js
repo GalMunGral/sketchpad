@@ -4,45 +4,12 @@ import { run, S } from "./CPU.js";
 
 const asm = compile([
   [LET, "CONSOLE", 0x7fffff],
+  [FUNC, "main", [], [["check-symbol", "@test-symbo2"]]],
   [
     FUNC,
-    "main",
-    [],
-    [
-      [LET, "n1", 2],
-      [LET, "n2", 3],
-      [LET, "n", 4],
-      [LET, "a", ["factorial", 12]],
-      [SET, "CONSOLE", "a"],
-      [LET, "b", ["factorial", 11]],
-      ["fib", [S["/"], "a", "b"]],
-    ],
-  ],
-  [
-    FUNC,
-    "fib",
-    ["n"],
-    [
-      [
-        IF,
-        [S["<"], "n", 2],
-        [1],
-        [[S["+"], ["fib", [S["-"], "n", 1]], ["fib", [S["-"], "n", 2]]]],
-      ],
-    ],
-  ],
-  [
-    FUNC,
-    "factorial",
-    ["n"],
-    [
-      [
-        IF,
-        [S["<"], "n", 2],
-        [1],
-        [[S["*"], "n", ["factorial", [S["-"], "n", 1]]]],
-      ],
-    ],
+    "check-symbol",
+    ["symbol"],
+    [[IF, [S["=="], "symbol", "@test-symbol"], [123], [456]]],
   ],
 ]);
 
