@@ -6,6 +6,7 @@ const col_size = 600;
 const frame_buffer_size = row_size * col_size * 3;
 
 export function read_word(addr) {
+  // console.log(`read ${addr} -> ${memory[addr]}`);
   return memory[addr] || 0;
 }
 

@@ -4,7 +4,7 @@ import { run, S } from "./CPU.js";
 
 const asm = compile([
   [VAR, "x"],
-  [FUNC, "main", [], [["fib", 10]]],
+  [FUNC, "main", [], [["factorial", 12]]],
   [
     FUNC,
     "fib",
@@ -18,11 +18,22 @@ const asm = compile([
       ],
     ],
   ],
+  [
+    FUNC,
+    "factorial",
+    ["n"],
+    [
+      [
+        IF,
+        [S["<"], "n", 2],
+        [1],
+        [[S["*"], "n", ["factorial", [S["-"], "n", 1]]]],
+      ],
+    ],
+  ],
 ]);
 
-console.log(asm);
-
-// const binary = assemble(asm);
+const binary = assemble(asm);
 
 // const binary = assemble([
 //   [S.jmp, "begin"],

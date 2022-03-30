@@ -194,6 +194,13 @@ export function run(program) {
       const offset = (instr << 8) >> 8;
       const operator = (instr << 8) >> 24;
 
+      // console.log(
+      //   Object.keys(S).find((k) => O[S[k]] == opcode),
+      //   offset,
+      //   Object.keys(S).find((k) => U[S[k]] == operator),
+      //   Object.keys(S).find((k) => B[S[k]] == operator)
+      // );
+
       switch (opcode) {
         case O[S.nop]:
           break;
@@ -290,6 +297,7 @@ export function run(program) {
         default:
           throw "Unsupported instruction";
       }
+      // console.log(reg);
     }
     requestIdleCallback(run_until_deadline);
   });

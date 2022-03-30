@@ -39,7 +39,12 @@ export function compile(program) {
     if (expr[0] == FUNC) compile_func(expr);
   });
 
-  return [[S.jmp, "main"], ...optimize(code_section), ...data_section];
+  return [
+    [S.call, "main"],
+    [S.jmp, -1],
+    ...optimize(code_section),
+    ...data_section,
+  ];
 
   function optimize(code) {
     const res = [code[0]];
@@ -107,7 +112,7 @@ export function compile(program) {
     const [, name, params, body] = defn;
     const { local_vars, i, j } = alloc_stack(defn);
 
-    code_section.push([j + 3]); // stack size
+    code_section.push([j]); // stack size
     code_section.push([name]);
     body.forEach((expr) => compile_expression(expr, i + 1));
     code_section.push([S.sld, -2]);
