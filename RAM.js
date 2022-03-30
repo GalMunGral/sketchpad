@@ -5,7 +5,7 @@ const ROW_SIZE = 800;
 const COL_SIZE = 600;
 const frame_buffer_size = ROW_SIZE * COL_SIZE;
 
-export function read_word(addr) {
+export function read(addr) {
   switch (addr) {
     case 0x7fffff:
       return 0 | prompt();
@@ -14,7 +14,7 @@ export function read_word(addr) {
   }
 }
 
-export function write_word(addr, data) {
+export function write(addr, data) {
   switch (addr) {
     case 0x7fffff:
       alert(data);

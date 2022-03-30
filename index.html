@@ -1,104 +1,42 @@
 <!DOCTYPE html>
-<div
+<canvas
+  width="800"
+  height="600"
   style="
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    justify-content: stretch;
+    box-sizing: border-box;
+    max-height: 100%;
+    max-width: 100%;
+    border: 5px solid black;
   "
->
-  <div style="padding: 50px; overflow: scroll">
-    <table id="mem" style="font-family: monospace"></table>
-  </div>
-  <div
-    style="flex: 1; display: flex; align-items: center; justify-content: center"
-  >
-    <canvas
-      width="800"
-      height="600"
-      style="box-sizing: border-box; height: 100%; border: 5px solid black"
-    ></canvas>
-  </div>
-</div>
+></canvas>
 <script type="module">
-  import { assemble } from "./Assembler.js";
-  import { compile, FUNCTION, IF, INIT, SET, WHILE } from "./Compiler.js";
-  import { run, S } from "./CPU.js";
+  import { compile } from "./Compiler.js";
+  import { run } from "./CPU.js";
 
-  const program = [
-    [INIT, "frame_buffer", 0],
-    [INIT, "alert", 0x7fffff],
-    [INIT, "row_size", 800],
-    [INIT, "col_size", 650],
-    [
-      FUNCTION,
-      "main",
-      [],
-      [
-        [
-          WHILE,
-          1,
-          [
-            ["draw", 0, 0, 800, 600, 255, 0, 0],
-            ["draw", 0, 0, 800, 600, 0, 255, 0],
-            ["draw", 0, 0, 800, 600, 0, 0, 255],
-          ],
-        ],
-      ],
-    ],
-    [
-      FUNCTION,
-      "draw",
-      ["x", "y", "w", "h", "r", "g", "b"],
-      [
-        [
-          INIT,
-          "color",
-          [S["|"], [S["|"], [S["<<"], "r", 16], [S["<<"], "g", 8]], "b"],
-        ],
-        [INIT, "i", "y"],
-        [
-          WHILE,
-          [S["<"], "i", [S["+"], "y", "h"]],
-          [
-            [INIT, "j", "x"],
-            [
-              WHILE,
-              [S["<"], "j", [S["+"], "x", "w"]],
-              [
-                [INIT, "offset", [S["+"], [S["*"], "i", "row_size"], "j"]],
-                // [SET, "*alert", "offset"],
-                ["memset", "frame_buffer", "offset", "color"],
-                [SET, "j", [S["+"], "j", 1]],
-              ],
-            ],
-            [SET, "i", [S["+"], "i", 1]],
-          ],
-        ],
-      ],
-    ],
-    [
-      FUNCTION,
-      "memset",
-      ["base", "offset", "value"],
-      [
-        [SET, "base", [S["+"], "base", "offset"]],
-        [SET, "*base", "value"],
-      ],
-    ],
-  ];
-
-  const asm = compile(program);
-  const binary = assemble(asm);
-
-  console.log(program);
-  console.log(asm);
-  console.log(binary);
-
-  run(binary);
+  const bin = compile(`
+    (INIT frame_buffer 0)
+    (INIT alert 0x7fffff)
+    (INIT row_size 800)
+    (INIT col_size 650)
+    (FUNC main () (
+      (LOOP 1 (
+        (draw 0 0 800 600 255 0 0)
+        (draw 0 0 800 600 0 255 0)
+        (draw 0 0 800 600 0 0 255)))))
+    (FUNC draw (x y w h r g b) (
+      (INIT color (| (| (<< r 16) (<< g 8)) b))
+      (INIT i y)
+      (LOOP (< i (+ y h)) (
+        (INIT j x)
+        (LOOP (< j (+ x w)) (
+          (INIT offset (+ (* i row_size) j))
+          (memset frame_buffer offset color)
+          (SET j (+ j 1))))
+        (SET i (+ i 1))))))
+    (FUNC memset (base offset value) (
+      (SET base (+ base offset))
+      (SET *base value)))
+  `);
+  console.log(bin);
+  run(bin);
 </script>
