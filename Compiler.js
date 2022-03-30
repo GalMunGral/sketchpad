@@ -1,6 +1,6 @@
 import { assemble } from "./Assembler.js";
 import { B, U } from "./CPU.js";
-import { $ } from "./symbols.js";
+import { $ } from "./Symbols.js";
 
 export function compile(source) {
   let tag_id = 0;

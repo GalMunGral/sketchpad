@@ -1,5 +1,5 @@
 import { read, write } from "./RAM.js";
-import { $ } from "./symbols.js";
+import { $ } from "./Symbols.js";
 
 export const O = {
   [$.nop]: 0x00,

@@ -1,5 +1,5 @@
 import { O, B, U } from "./CPU.js";
-import { $ } from "./symbols.js";
+import { $ } from "./Symbols.js";
 
 export function assemble(text) {
   const tags = {};
