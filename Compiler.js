@@ -1,6 +1,6 @@
 import { B, S, U } from "./CPU.js";
 
-export const VAR = Symbol("VAR");
+export const LET = Symbol("LET");
 export const FUNC = Symbol("FUNC");
 export const SET = Symbol("SET");
 export const IF = Symbol("IF");
@@ -22,13 +22,17 @@ export function compile(program) {
           n_params: expr[2].length,
         };
         break;
-      case VAR:
-        if (expr.length != 2) throw new Error("Syntax Error [VAR]");
+      case LET:
+        if (expr.length < 2 || expr.length > 3)
+          throw new Error("Syntax Error [VAR]");
         if (expr[1] in global_vars)
           throw new Error("variable already declared");
+        const initializer = expr.length == 3 ? expr[2] : 0;
+        if (typeof initializer != "number")
+          throw new Error("Must be constant literal");
         global_vars[expr[1]] = 1;
         data_section.push([expr[1]]);
-        data_section.push([0]);
+        data_section.push([initializer]);
         break;
       default:
         throw new Error("declaration expected");
@@ -88,8 +92,9 @@ export function compile(program) {
       switch (expr[0]) {
         case FUNC:
           throw new Error("FUNC declaration must be global");
-        case VAR:
-          if (expr.length != 2) throw new Error("Syntax error [VAR]");
+        case LET:
+          if (expr.length < 2 || expr.length > 3)
+            throw new Error("Syntax error [VAR]");
           local_vars[expr[1]] = i;
           ++i;
           ++j;
@@ -208,13 +213,12 @@ export function compile(program) {
           return compile_reference(expr);
         default:
           switch (expr[0]) {
-            case VAR:
+            case LET:
+            case SET:
+              compile_assignment(expr, k);
               break;
             case IF:
               compile_conditional(expr, k);
-              break;
-            case SET:
-              compile_assignment(expr, k);
               break;
             default:
               compile_application(expr, k);

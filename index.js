@@ -1,10 +1,23 @@
 import { assemble } from "./Assembler.js";
-import { compile, FUNC, IF, VAR } from "./Compiler.js";
+import { compile, FUNC, IF, LET, SET } from "./Compiler.js";
 import { run, S } from "./CPU.js";
 
 const asm = compile([
-  [VAR, "x"],
-  [FUNC, "main", [], [["factorial", 12]]],
+  [LET, "CONSOLE", 0x7fffff],
+  [
+    FUNC,
+    "main",
+    [],
+    [
+      [LET, "n1", 2],
+      [LET, "n2", 3],
+      [LET, "n", 4],
+      [LET, "a", ["factorial", 12]],
+      [SET, "CONSOLE", "a"],
+      [LET, "b", ["factorial", 11]],
+      ["fib", [S["/"], "a", "b"]],
+    ],
+  ],
   [
     FUNC,
     "fib",

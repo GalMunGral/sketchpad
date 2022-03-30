@@ -186,20 +186,12 @@ export function run(program) {
 
   requestIdleCallback(function run_until_deadline(deadline) {
     while (deadline.timeRemaining()) {
-      // console.log(reg.pc);
       if (reg.pc < BASE) return;
 
       const instr = read(reg.pc++);
       const opcode = instr >> 24;
       const offset = (instr << 8) >> 8;
       const operator = (instr << 8) >> 24;
-
-      // console.log(
-      //   Object.keys(S).find((k) => O[S[k]] == opcode),
-      //   offset,
-      //   Object.keys(S).find((k) => U[S[k]] == operator),
-      //   Object.keys(S).find((k) => B[S[k]] == operator)
-      // );
 
       switch (opcode) {
         case O[S.nop]:
@@ -284,20 +276,18 @@ export function run(program) {
           reg.spl = reg.spr;
           reg.spr += stack_size;
           reg.pc = next;
-          console.groupCollapsed();
+          // console.groupCollapsed();
           break;
         }
         case O[S.ret]:
           reg.spr = reg.spl;
           reg.spl = read(reg.spr);
           reg.pc = read(reg.spr - 1);
-          console.groupEnd();
-          console.log("RETURN", read(reg.spr - 2));
+          // console.groupEnd();
           break;
         default:
           throw "Unsupported instruction";
       }
-      // console.log(reg);
     }
     requestIdleCallback(run_until_deadline);
   });
