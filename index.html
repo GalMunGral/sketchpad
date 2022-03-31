@@ -19,38 +19,58 @@
     (INIT HAS_INPUT 0x7ffff0)
     (INIT INPUT_X 0x7ffff1)
     (INIT INPUT_Y 0x7ffff2)
+
+    (INIT x 0xffffffff)
+    (INIT y 0xffffffff)
+
     (FUNC main ()
       (INIT c 64)
       (INIT d 8)
-      (INIT x 0xffffffff)
-      (INIT y 0xffffffff)
-      (INIT w 2)
+      (INIT w 1)
       (WHILE 1
         (IF *HAS_INPUT 
-          (
-            (IF (&& (> x 0) (> y 0))
-              ((SET w (+ 2
+          ((IF (&& (> x 0) (> y 0))
+              ((SET w (+ 1
                 (/ 
                   (+ 
                     (abs (- *INPUT_X x))
                     (abs (- *INPUT_Y y)))
                 5))))
               (0))
-            (log w)
-            (SET x *INPUT_X)
-            (SET y *INPUT_Y)
             (SET c (+ c d))
             (IF (|| (== c 248) (== c 64))
               ((SET d (- 0 d)))
               (0))
-            (INIT dot (make-node (- x 2) (- y 2)
+            (SET x *INPUT_X)
+            (SET y *INPUT_Y)
+            (INIT dot (make-node (- *INPUT_X 2) (- *INPUT_Y 2)
               (* w 2) (* w 2) (color c c c)))
-            (draw dot))
+            (draw dot)
+            (line-to 0 0))
           (0))))
 
     (INIT FRAME_BUFFER 0)
     (INIT ROW_SIZE 1280)
     (INIT COL_SIZE 800)
+
+    (FUNC line-to (x-end y-end)
+      (INIT i y)
+      (INIT j x)
+      (WHILE (!= i y-end)
+        (put-pixel j i (color 64 32 32))
+        (IF (< (abs (- x-end x)) (abs (- y-end y)))
+          ((IF (< i y-end)
+              ((SET i (+ i 1)))
+              ((SET i (- i 1))))
+            (SET j (+ x (/ 
+              (* (- i y) (- x-end x))
+              (- y-end y)))))
+          ((IF (< j x-end)
+              ((SET j (+ j 1)))
+              ((SET j (- j 1))))
+            (SET i (+ y (/ 
+              (* (- j x) (- y-end y))
+              (- x-end x))))))))
 
     (FUNC draw (node)
       (INIT i (get-field node @top))
@@ -59,11 +79,13 @@
         (INIT j (get-field node @left))
         (INIT right (+ j (get-field node @width)))
         (WHILE (< j right)
-          (INIT offset (+ (* i ROW_SIZE) j))
-          (write FRAME_BUFFER offset
-            (get-field node @color))
+          (put-pixel j i (get-field node @color))
           (SET j (+ j 1)))
         (SET i (+ i 1))))
+    
+    (FUNC put-pixel (x y c)
+      (INIT offset (+ (* y ROW_SIZE) x))
+      (write FRAME_BUFFER offset c))
     
     (FUNC make-node (x y w h c)
       (INIT p (alloc 5))

@@ -80,7 +80,7 @@ export function compile(source) {
       while (i < s.length && /\S/.test(s[i]) && s[i] != ")") ++i;
       const w = s.slice(j, i);
       consume_whitespace();
-      return /\d/.test(w[0]) ? Number(w) : w in $ ? $[w] : w;
+      return /\d/.test(w[0]) ? 0 | Number(w) : w in $ ? $[w] : w;
     }
 
     function parse_list() {
