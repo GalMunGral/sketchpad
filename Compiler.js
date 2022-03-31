@@ -66,6 +66,7 @@ export function compile(source) {
     let expr;
     consume_whitespace();
     while ((expr = parse_expression())) {
+      console.log(expr);
       res.push(expr);
     }
     return res;

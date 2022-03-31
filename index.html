@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<body style="background: white; margin: 0">
+<body style="background: black; margin: 0">
   <canvas
     width="1280"
     height="800"
@@ -8,7 +8,6 @@
       margin: auto;
       height: min(calc(100vw * 800 / 1280), 100vh);
       width: min(calc(100vh * 1280 / 800), 100vw);
-      background: black;
     "
   ></canvas>
 </body>
@@ -20,48 +19,98 @@
     (INIT HAS_INPUT 0x7ffff0)
     (INIT INPUT_X 0x7ffff1)
     (INIT INPUT_Y 0x7ffff2)
-
     (FUNC main ()
       (INIT c 64)
-      (INIT d 1)
-      (INIT w 4)
+      (INIT d 8)
+      (INIT x 0xffffffff)
+      (INIT y 0xffffffff)
+      (INIT w 2)
       (WHILE 1
         (IF *HAS_INPUT 
-          ((INIT x *INPUT_X)
-            (INIT y *INPUT_Y)
+          (
+            (IF (&& (> x 0) (> y 0))
+              ((SET w (+ 2
+                (/ 
+                  (+ 
+                    (abs (- *INPUT_X x))
+                    (abs (- *INPUT_Y y)))
+                5))))
+              (0))
+            (log w)
+            (SET x *INPUT_X)
+            (SET y *INPUT_Y)
             (SET c (+ c d))
-            (IF (|| (== c 255) (== c 64))
-              ((SET d (- 0 d))) (0))
-            (draw (- x w) (- y w) (* w 2) (* w 2) c c c))
+            (IF (|| (== c 248) (== c 64))
+              ((SET d (- 0 d)))
+              (0))
+            (INIT dot (make-node (- x 2) (- y 2)
+              (* w 2) (* w 2) (color c c c)))
+            (draw dot))
           (0))))
-    (FUNC log (x)
-      (SET *CONSOLE x))
 
-    (INIT CONSOLE 0x7ffffe)
     (INIT FRAME_BUFFER 0)
     (INIT ROW_SIZE 1280)
     (INIT COL_SIZE 800)
 
-    (FUNC draw (x y w h r g b)
-      (INIT color (| (| (<< r 16) (<< g 8)) b))
-      (INIT i y)
-      (WHILE (< i (+ y h)) 
-        (INIT j x)
-        (WHILE (< j (+ x w))
+    (FUNC draw (node)
+      (INIT i (get-field node @top))
+      (INIT bottom (+ i (get-field node @height)))
+      (WHILE (< i bottom) 
+        (INIT j (get-field node @left))
+        (INIT right (+ j (get-field node @width)))
+        (WHILE (< j right)
           (INIT offset (+ (* i ROW_SIZE) j))
-          (memset FRAME_BUFFER offset color)
+          (write FRAME_BUFFER offset
+            (get-field node @color))
           (SET j (+ j 1)))
         (SET i (+ i 1))))
-          
-    (FUNC memset (base offset value)
-      (SET base (+ base offset))
-      (SET *base value))
     
+    (FUNC make-node (x y w h c)
+      (INIT p (alloc 5))
+      (set-field p @left x)
+      (set-field p @top y)
+      (set-field p @height h)
+      (set-field p @width w)
+      (set-field p @color c)
+      p)
+
+    (INIT CONSOLE 0x7ffffe)
+    (FUNC log (x)
+      (SET *CONSOLE x))
+    
+    (FUNC get-field (node k)
+      (read node (offset k)))
+
+    (FUNC set-field (node k v)
+      (write node (offset k) v))
+
+    (FUNC offset (k) 
+      (IF (== k @left) (0)
+        ((IF (== k @top) (1)
+          ((IF (== k @width) (2)
+            ((IF (== k @height) (3)
+              ((IF (== k @color) (4)
+                ((log 0xffffffff))))))))))))
+          
     (INIT free 0x00811000)
     (FUNC alloc (size)
       (INIT res free)
       (SET free (+ free size))
       res)
+    
+    (FUNC read (base offset)
+      (SET base (+ base offset))
+      *base)
+
+    (FUNC write (base offset value)
+      (SET base (+ base offset))
+      (SET *base value))
+    
+    (FUNC color (r g b)
+      (| (| (<< r 16) (<< g 8)) b))
+    
+    (FUNC abs (n)
+      (IF (< n 0) ((- 0 n)) (n)))
   `);
   console.log(out);
   run(out.bin);
