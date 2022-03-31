@@ -42,7 +42,7 @@ export function write(addr, data) {
       alert(data);
       break;
     default:
-      memory[addr] = data;
+      memory[addr] = 0 | data;
       if (addr < frame_buffer_size) {
         const row = Math.floor(addr / ROW_SIZE);
         const col = addr % ROW_SIZE;
