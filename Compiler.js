@@ -16,7 +16,7 @@ export function compile(source) {
   for (const expr of ast) {
     switch (expr[0]) {
       case $.FUNC:
-        if (expr.length != 4) throw new Error("Syntax Error [FUNC]");
+        if (expr.length < 4) throw new Error("Syntax Error [FUNC]");
         if (expr[1] in global_vars)
           throw new Error("function already declared");
         functions[expr[1]] = {
@@ -123,7 +123,7 @@ export function compile(source) {
   }
 
   function alloc_stack(defn) {
-    const [, , params, body] = defn;
+    const [, , params, ...body] = defn;
 
     let i = 1 + params.length;
     let j = 1 + params.length;
@@ -167,11 +167,10 @@ export function compile(source) {
           expr[3].forEach(check);
           break;
         case $.WHILE:
-          if (expr.length != 3) {
+          if (expr.length < 3) {
             throw new Error("Syntax error [WHILE]");
           }
-          check(expr[1]);
-          expr[2].forEach(check);
+          expr.slice(1).forEach(check);
           break;
         default:
           j = Math.max(j, i + expr.length - 1);
@@ -181,7 +180,7 @@ export function compile(source) {
   }
 
   function compile_func(defn) {
-    const [, name, , body] = defn;
+    const [, name, , ...body] = defn;
     const { local_vars, i, j } = alloc_stack(defn);
 
     code_section.push([j]); // stack size
@@ -247,7 +246,7 @@ export function compile(source) {
     }
 
     function compile_loop(expr, k) {
-      const [, condition, body] = expr;
+      const [, condition, ...body] = expr;
       const LOOP_TAG = "LOOP-" + tag_id++;
       const LOOP_BEGIN_TAG = "LOOP-BEGIN-" + tag_id++;
       const LOOP_END_TAG = "LOOP-END-" + tag_id++;
