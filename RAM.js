@@ -1,8 +1,11 @@
 const memory = (window.memory = Array(10000));
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
-const ROW_SIZE = 1280;
-const COL_SIZE = 800;
+ctx.fillStyle = "black";
+ctx.fillRect(0, 0, 1280, 800);
+
+const ROW_SIZE = canvas.width;
+const COL_SIZE = canvas.height;
 const frame_buffer_size = ROW_SIZE * COL_SIZE;
 
 let has_event = 0;
