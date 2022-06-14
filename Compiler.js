@@ -53,16 +53,6 @@ export function compile(source) {
 
   const bin = assemble(asm);
 
-  code.textContent = bin
-    .map((x) => {
-      let s = "";
-      for (let i = 31; i > -1; --i) {
-        s += String((x >> i) & 1);
-      }
-      return s;
-    })
-    .join("\n");
-
   return {
     ast,
     asm,

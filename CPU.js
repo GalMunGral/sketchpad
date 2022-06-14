@@ -134,9 +134,44 @@ export function run(program) {
     write(BASE + i, program[i]);
   }
 
+  program
+    .map((x) => {
+      let s = "";
+      for (let i = 31; i > -1; --i) {
+        s += String((x >> i) & 1);
+      }
+      return s;
+    })
+    .forEach((line, i) => {
+      const el = document.createElement("pre");
+      el.textContent = line;
+      el.id = "line-" + i;
+      el.style.margin = 0;
+      code.append(el);
+    });
+
+  const __DEBUG__ = Boolean(
+    new URLSearchParams(location?.search)?.get("visualize")
+  );
+
   requestIdleCallback(function run_until_deadline(deadline) {
+    let i = 0;
     while (deadline.timeRemaining()) {
       if (reg.pc < BASE) return;
+
+      if (__DEBUG__) {
+        const el = document.getElementById("line-" + (reg.pc - BASE));
+        if (el) {
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              el.style.color = "white";
+              requestAnimationFrame(() => {
+                el.style.color = "gray";
+              });
+            });
+          }, 16 * i++);
+        }
+      }
 
       const instr = read(reg.pc++);
       const opcode = instr >> 24;
