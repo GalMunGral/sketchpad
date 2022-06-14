@@ -10,6 +10,17 @@
       width: min(calc(100vh * 1280 / 800), 100vw);
     "
   ></canvas>
+  <pre
+    id="code"
+    style="
+      width: 100%;
+      margin: 0;
+      overflow: scroll;
+      color: gray;
+      writing-mode: vertical-lr;
+      text-orientation: upright;
+    "
+  ></pre>
   <script type="module">
     import { compile } from "./Compiler.js";
     import { run } from "./CPU.js";
