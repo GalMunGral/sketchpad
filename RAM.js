@@ -9,25 +9,39 @@ const COL_SIZE = canvas.height;
 const frame_buffer_size = ROW_SIZE * COL_SIZE;
 
 let has_event = 0;
+let mouse_down = 0;
 let event_x = 0;
 let event_y = 0;
 
 canvas.onmousemove = (e) => {
+  has_event = 1;
   const { left, top, height, width } = canvas.getBoundingClientRect();
   event_x = Math.round(ROW_SIZE * ((e.clientX - left) / width));
   event_y = Math.round(COL_SIZE * ((e.clientY - top) / height));
+};
+
+canvas.onmousedown = (e) => {
   has_event = 1;
+  mouse_down = 1;
+};
+
+canvas.onmouseup = (e) => {
+  has_event = 1;
+  mouse_down = 0;
 };
 
 export function read(addr) {
   switch (addr) {
-    case 0x7ffff0:
-      return has_event;
+    case 0x7ffff0: {
+      const res = has_event;
+      has_event = 0;
+      return res;
+    }
     case 0x7ffff1:
-      has_event = 0;
-      return event_x;
+      return mouse_down;
     case 0x7ffff2:
-      has_event = 0;
+      return event_x;
+    case 0x7ffff3:
       return event_y;
     case 0x7fffff:
       return 0 | prompt();
