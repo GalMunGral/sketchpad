@@ -1,0 +1,25 @@
+{
+  "name": "sketchpad",
+  "version": "1.0.0",
+  "description": "from bits to dots",
+  "main": "Assembler.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npx serve docs",
+    "dev": "run-p \"build -- --watch\" serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/galmungral/sketchpad.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/galmungral/sketchpad/issues"
+  },
+  "homepage": "https://github.com/galmungral/sketchpad#readme",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "typescript": "^4.7.3"
+  }
+}
