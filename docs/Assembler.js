@@ -1,4 +1,4 @@
-import { OPCODE, BINARY_OPERATOR, UNARY_OPERATOR, } from "./CPU.js";
+import { BINARY_OPERATOR, OPCODE, UNARY_OPERATOR, } from "./types.js";
 export function assemble(program) {
     const tags = {};
     const res = [];
