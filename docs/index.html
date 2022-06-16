@@ -3,19 +3,14 @@
   <canvas
     width="1600"
     height="900"
-    style="
-      display: block;
-      margin: auto;
-      padding: 20px;
-      height: calc(100vh - 300px);
-    "
+    style="display: block; margin: auto; height: calc(100vh - 300px)"
   ></canvas>
   <div
     id="code"
     style="
       font-size: 8px;
       width: 100%;
-      height: 300px;
+      height: 270px;
       margin: 0;
       overflow: scroll;
       color: gray;
@@ -27,30 +22,56 @@
   <script type="module">
     import { compile } from "./Compiler.js";
     import { run } from "./CPU.js";
-    const bin = compile(`
+    run(
+      compile(`
+      (INIT FREE 0x00811000)
       (INIT FRAME_BUFFER 0)
       (INIT ROW_SIZE 0x7fffee)
       (INIT COL_SIZE 0x7fffef)
+
       (INIT HAS_INPUT 0x7ffff0)
       (INIT MOUSE_DOWN 0x7ffff1)
       (INIT INPUT_X 0x7ffff2)
       (INIT INPUT_Y 0x7ffff3)
-      (INIT x 0xffffffff)
-      (INIT y 0xffffffff)
+      (INIT x 0)
+      (INIT y 0) 
+
+      (FUNC abs (n) (IF (< n 0) ((- 0 n)) (n)))
+      
+      (FUNC color (r g b) (| (| (<< r 16) (<< g 8)) b)) 
+
+      (FUNC put-pixel (x y c)
+        (INIT offset (+ (* y *ROW_SIZE) x))
+        (set FRAME_BUFFER offset c))
+    
+      (FUNC alloc (size)
+        (INIT res FREE)
+        (SET FREE (+ FREE size))
+        res)
+
+      (FUNC get (base offset)
+        (SET base (+ base offset))
+        *base)
+        
+      (FUNC set (base offset value)
+        (SET base (+ base offset))
+        (SET *base value)) 
 
       (FUNC main ()
         (WHILE 1
           (IF (&& *HAS_INPUT *MOUSE_DOWN)
             ((SET x *INPUT_X)
               (SET y *INPUT_Y)
-              (line-to (+ x 20) (+ y 20) *ROW_SIZE *COL_SIZE)
-              (INIT shadow (make-node *INPUT_X *INPUT_Y 20 20 (color 128 128 128)))
+              (draw-line (+ x 20) (+ y 20) *ROW_SIZE *COL_SIZE)
+              (INIT shadow (make-rect (- *INPUT_X 5) (- *INPUT_Y 5)
+                20 20 (color 32 32 32)))
               (draw shadow)
-              (INIT dot (make-node *INPUT_X *INPUT_Y 20 20 (color 255 255 255)))
+              (INIT dot (make-rect (- *INPUT_X 10) (- *INPUT_Y 10) 
+                20 20 (color 255 255 255)))
               (draw dot))
             (0))))
 
-      (FUNC line-to (x-start y-start x-end y-end)
+      (FUNC draw-line (x-start y-start x-end y-end)
         (INIT i y-start)
         (INIT j x-start)
         (WHILE (!= i y-end)
@@ -68,23 +89,19 @@
               (SET i (+ y-start (/ 
                 (* (- j x-start) (- y-end y-start))
                 (- x-end x-start))))))))
-
-      (FUNC draw (node)
-        (INIT i (get-field node @top))
-        (INIT bottom (+ i (get-field node @height)))
+      
+      (FUNC draw (rect)
+        (INIT i (get-field rect @top))
+        (INIT bottom (+ i (get-field rect @height)))
         (WHILE (< i bottom) 
-          (INIT j (get-field node @left))
-          (INIT right (+ j (get-field node @width)))
+          (INIT j (get-field rect @left))
+          (INIT right (+ j (get-field rect @width)))
           (WHILE (< j right)
-            (put-pixel j i (get-field node @color))
+            (put-pixel j i (get-field rect @color))
             (SET j (+ j 1)))
           (SET i (+ i 1))))
       
-      (FUNC put-pixel (x y c)
-        (INIT offset (+ (* y *ROW_SIZE) x))
-        (write FRAME_BUFFER offset c))
-      
-      (FUNC make-node (x y w h c)
+      (FUNC make-rect (x y w h c)
         (INIT p (alloc 5))
         (set-field p @left x)
         (set-field p @top y)
@@ -92,46 +109,18 @@
         (set-field p @width w)
         (set-field p @color c)
         p)
-
-      (INIT CONSOLE 0x7ffffe)
-      (FUNC log (x)
-        (SET *CONSOLE x))
-      
-      (FUNC get-field (node k)
-        (read node (offset k)))
-
-      (FUNC set-field (node k v)
-        (write node (offset k) v))
-
+      (FUNC get-field (rect k)
+        (get rect (offset k)))
+      (FUNC set-field (rect k v)
+        (set rect (offset k) v))
       (FUNC offset (k) 
         (IF (== k @left) (0)
           ((IF (== k @top) (1)
             ((IF (== k @width) (2)
               ((IF (== k @height) (3)
                 ((IF (== k @color) (4)
-                  ((log 0xffffffff))))))))))))
-            
-      (INIT free 0x00811000)
-      (FUNC alloc (size)
-        (INIT res free)
-        (SET free (+ free size))
-        res)
-      
-      (FUNC read (base offset)
-        (SET base (+ base offset))
-        *base)
-
-      (FUNC write (base offset value)
-        (SET base (+ base offset))
-        (SET *base value))
-      
-      (FUNC color (r g b)
-        (| (| (<< r 16) (<< g 8)) b))
-      
-      (FUNC abs (n)
-        (IF (< n 0) ((- 0 n)) (n)))
-    `);
-
-    run(bin);
+                  (0)))))))))))
+    `)
+    );
   </script>
 </body>
